@@ -105,7 +105,11 @@ def get_breeze_checked(breeze, traps, front):
             for n in neigh:
                 if n in breeze_checked:
                     breeze_checked[n] = True
-    return breeze_checked
+
+    for k, v in breeze_checked.items():
+        if v == False:
+            return False
+    return True
 
 
 def get_fronts(data):
@@ -119,8 +123,8 @@ def get_fronts(data):
     for i in range(x):
         for j in range(y):
             if data[i][j] == 'B':
-                max_neigbor = get_max_neighbor(fronts, (i, j))
-                if max_neigbor <= 0:
+                max_neighbor = get_max_neighbor(fronts, (i, j))
+                if max_neighbor <= 0:
                     curr_max += 1
                     neighbors = set_neighbors_except(fronts, (i, j), curr_max, -1)
                     breeze_in_fronts[i][j] = curr_max
@@ -128,11 +132,15 @@ def get_fronts(data):
                     front_indexes[curr_max].extend(neighbors)
                     breeze_indexes[curr_max].append((i, j))
                 else:
-                    neighbors = set_neighbors_except(fronts, (i, j), max_neigbor, -1)
-                    breeze_in_fronts[i][j] = max_neigbor
+                    neighbors = set_neighbors_except(fronts, (i, j), max_neighbor, -1)
+                    breeze_in_fronts[i][j] = max_neighbor
 
-                    front_indexes[max_neigbor].extend(neighbors)
-                    breeze_indexes[max_neigbor].append((i, j))
+                    front_indexes[max_neighbor].extend(neighbors)
+                    breeze_indexes[max_neighbor].append((i, j))
+
+    for k, v in front_indexes.items():
+        temp_set = set(v)
+        front_indexes[k] = list(temp_set)
 
     return fronts, breeze_in_fronts, front_indexes, breeze_indexes
 
@@ -152,16 +160,23 @@ def wumpus():
     print(front_indexes)
     print()
     print(breezes)
-    print()
     print(breeze_indexes)
+    print()
 
     for k, front in front_indexes.items():
         breeze = breeze_indexes[k]
         trap_table = get_combinations(len(front))
-        #print(front, "breeze:", breeze)
+        print("breeze: ", breeze, " fronts: ", front)
+        breeze_possible = list()
         for traps in trap_table:  # check one variant of trap setting
-            breeze_checked = get_breeze_checked(breeze, traps, front)
-            #print(breeze_checked, traps)
+            breeze_possible.append(get_breeze_checked(breeze, traps, front))
+
+        print(breeze_possible)
+        print(trap_table)
+
+        for f in range(len(front)):
+            fp = compute_probability(breeze_possible, trap_table)
+
 
     output = np.zeros((n, m), dtype=float)
     with open(sys.argv[2], "w+") as output_f:
@@ -174,7 +189,6 @@ def main():
         print("Pass proper args")
         exit(0)
     wumpus()
-
 
 if __name__ == '__main__':
     main()
