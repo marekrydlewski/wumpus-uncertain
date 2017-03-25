@@ -75,7 +75,7 @@ def get_combinations(size):
             if to_set:
                 output[y][x] = True
             i += 1
-            if (i == jump):
+            if i == jump:
                 to_set = not to_set
                 i = 0
         jump /= 2
@@ -86,12 +86,12 @@ def get_possible_areas(data):
     y, x = data.shape
     possible = np.zeros((y, x), dtype=int)
 
-    for i in range(x):
-        for j in range(y):
-            if data[i][j] == 'O':
+    for i, line in enumerate(data):
+        for j, cell in enumerate(line):
+            if cell == 'O':
                 possible[i][j] = -1
                 set_neighbors(possible, (i, j), -1)
-            elif data[i][j] == 'B':
+            elif cell == 'B':
                 possible[i][j] = -1
 
     return possible
@@ -99,15 +99,15 @@ def get_possible_areas(data):
 
 def get_breeze_checked(breeze, traps, front):
     breeze_checked = {b: False for b in breeze}
-    for i in range(len(traps)):
-        if traps[i] == True:
+    for i, trap in enumerate(traps):
+        if trap:
             neigh = get_neighbors_pos(front[i])
             for n in neigh:
                 if n in breeze_checked:
                     breeze_checked[n] = True
 
     for k, v in breeze_checked.items():
-        if v == False:
+        if not v:
             return False
     return True
 
@@ -120,8 +120,8 @@ def get_fronts(data):
     breeze_indexes = defaultdict(list)
     front_indexes = defaultdict(list)
 
-    for i in range(x):
-        for j in range(y):
+    for i, line in enumerate(data):
+        for j, cell in enumerate(line):
             if data[i][j] == 'B':
                 max_neighbor = get_max_neighbor(fronts, (i, j))
                 if max_neighbor <= 0:
@@ -138,11 +138,13 @@ def get_fronts(data):
                     front_indexes[max_neighbor].extend(neighbors)
                     breeze_indexes[max_neighbor].append((i, j))
 
+    # remove duplicates (from extending)
     for k, v in front_indexes.items():
         temp_set = set(v)
         front_indexes[k] = list(temp_set)
 
     return fronts, breeze_in_fronts, front_indexes, breeze_indexes
+
 
 def set_prob(prob, factor):
     if prob == 0.0:
@@ -150,26 +152,26 @@ def set_prob(prob, factor):
     else:
         return prob * factor
 
+
 def compute_probability(breeze_possible, trap_table, current, prob):
     final_prob_left = 0.0
     final_prob_right = 0.0
-    y, x = trap_table.shape
 
     for breeze, traps in zip(breeze_possible, trap_table):
-        if breeze == True:
+        if breeze:
             local_prob_left = 0.0
             local_prob_right = 0.0
             for index, trap in enumerate(traps):
                 if index != current:
-                    if traps[current] == True:
-                        #prob left
-                        if trap == True:
+                    if traps[current]:
+                        # prob left
+                        if trap:
                             local_prob_left = set_prob(local_prob_left, prob)
                         else:
                             local_prob_left = set_prob(local_prob_left, 1 - prob)
                     else:
-                        #prob right
-                        if trap == True:
+                        # prob right
+                        if trap:
                             local_prob_right = set_prob(local_prob_right, prob)
                         else:
                             local_prob_right = set_prob(local_prob_right, 1 - prob)
@@ -180,11 +182,11 @@ def compute_probability(breeze_possible, trap_table, current, prob):
     final_prob_left *= prob
     final_prob_right *= (1 - prob)
 
-    #normalization
-    sum = final_prob_right + final_prob_left
-    if sum == 0:
+    # normalization
+    sums = final_prob_right + final_prob_left
+    if sums == 0:
         return 1.0, 0.0
-    return final_prob_left / sum, final_prob_right / sum
+    return final_prob_left / sums, final_prob_right / sums
 
 
 def wumpus():
@@ -192,19 +194,19 @@ def wumpus():
     fronts = table with fronts, 0 nothing (normal probability), -1 no front coz O in sensor, >= 1 fronts
     """
     with open(sys.argv[1], "r") as input_f:
-        input = input_f.readlines()
-    n, m = map(int, input[0].strip().split(' '))
-    prob_trap = float(input[1])
-    data = np.array([list(line.strip()) for line in input[2:(2 + n)]])
+        input_data = input_f.readlines()
+    n, m = map(int, input_data[0].strip().split(' '))
+    prob_trap = float(input_data[1])
+    data = np.array([list(line.strip()) for line in input_data[2:(2 + n)]])
 
     fronts, breezes, front_indexes, breeze_indexes = get_fronts(data)
-    print(fronts)
-    print(front_indexes)
-    print()
-    print(breezes)
-    print(breeze_indexes)
-    print()
 
+    # print(fronts)
+    # print(front_indexes)
+    # print()
+    # print(breezes)
+    # print(breeze_indexes)
+    # print()
 
     output = np.zeros((n, m), dtype=float)
     output[fronts == 0] = prob_trap
@@ -212,17 +214,13 @@ def wumpus():
     for k, front in front_indexes.items():
         breeze = breeze_indexes[k]
         trap_table = get_combinations(len(front))
-        print("breeze: ", breeze, " fronts: ", front)
+        # print("breeze: ", breeze, " fronts: ", front)
         breeze_possible = list()
         for traps in trap_table:  # check one variant of trap setting
             breeze_possible.append(get_breeze_checked(breeze, traps, front))
-
-        print(breeze_possible)
-        print(trap_table)
-
-        for f in range(len(front)):
-            pb_left, pb_right = compute_probability(breeze_possible, trap_table, f, prob_trap)
-            i, j = front[f]
+        for index, f in enumerate(front):
+            pb_left, pb_right = compute_probability(breeze_possible, trap_table, index, prob_trap)
+            i, j = f
             output[i][j] = pb_left
 
     output = np.around(output, 2)
@@ -240,6 +238,7 @@ def main():
         print("Pass proper args")
         exit(0)
     wumpus()
+
 
 if __name__ == '__main__':
     main()
