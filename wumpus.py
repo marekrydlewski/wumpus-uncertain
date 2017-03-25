@@ -179,10 +179,12 @@ def compute_probability(breeze_possible, trap_table, current, prob):
 
     final_prob_left *= prob
     final_prob_right *= (1 - prob)
-    
+
     #normalization
     sum = final_prob_right + final_prob_left
-    return round(final_prob_left / sum , 2), round(final_prob_right / sum, 2)
+    if sum == 0:
+        return 1.0, 0.0
+    return final_prob_left / sum, final_prob_right / sum
 
 
 def wumpus():
@@ -205,6 +207,7 @@ def wumpus():
 
 
     output = np.zeros((n, m), dtype=float)
+    output[fronts == 0] = prob_trap
 
     for k, front in front_indexes.items():
         breeze = breeze_indexes[k]
@@ -218,12 +221,17 @@ def wumpus():
         print(trap_table)
 
         for f in range(len(front)):
-            fp = compute_probability(breeze_possible, trap_table, f, prob_trap)
-            print(fp)
+            pb_left, pb_right = compute_probability(breeze_possible, trap_table, f, prob_trap)
+            i, j = front[f]
+            output[i][j] = pb_left
 
-
+    output = np.around(output, 2)
+    print(output)
     with open(sys.argv[2], "w+") as output_f:
-        pass
+        for line in output:
+            for prob in line:
+                output_f.write("{:.2f} ".format(prob))
+            output_f.write("\n")
     return
 
 
