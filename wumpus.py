@@ -144,6 +144,46 @@ def get_fronts(data):
 
     return fronts, breeze_in_fronts, front_indexes, breeze_indexes
 
+def set_prob(prob, factor):
+    if prob == 0.0:
+        return factor
+    else:
+        return prob * factor
+
+def compute_probability(breeze_possible, trap_table, current, prob):
+    final_prob_left = 0.0
+    final_prob_right = 0.0
+    y, x = trap_table.shape
+
+    for breeze, traps in zip(breeze_possible, trap_table):
+        if breeze == True:
+            local_prob_left = 0.0
+            local_prob_right = 0.0
+            for index, trap in enumerate(traps):
+                if index != current:
+                    if traps[current] == True:
+                        #prob left
+                        if trap == True:
+                            local_prob_left = set_prob(local_prob_left, prob)
+                        else:
+                            local_prob_left = set_prob(local_prob_left, 1 - prob)
+                    else:
+                        #prob right
+                        if trap == True:
+                            local_prob_right = set_prob(local_prob_right, prob)
+                        else:
+                            local_prob_right = set_prob(local_prob_right, 1 - prob)
+
+            final_prob_left += local_prob_left
+            final_prob_right += local_prob_right
+
+    final_prob_left *= prob
+    final_prob_right *= (1 - prob)
+    
+    #normalization
+    sum = final_prob_right + final_prob_left
+    return round(final_prob_left / sum , 2), round(final_prob_right / sum, 2)
+
 
 def wumpus():
     """
@@ -152,7 +192,7 @@ def wumpus():
     with open(sys.argv[1], "r") as input_f:
         input = input_f.readlines()
     n, m = map(int, input[0].strip().split(' '))
-    prob_hole = float(input[1])
+    prob_trap = float(input[1])
     data = np.array([list(line.strip()) for line in input[2:(2 + n)]])
 
     fronts, breezes, front_indexes, breeze_indexes = get_fronts(data)
@@ -162,6 +202,9 @@ def wumpus():
     print(breezes)
     print(breeze_indexes)
     print()
+
+
+    output = np.zeros((n, m), dtype=float)
 
     for k, front in front_indexes.items():
         breeze = breeze_indexes[k]
@@ -175,10 +218,10 @@ def wumpus():
         print(trap_table)
 
         for f in range(len(front)):
-            fp = compute_probability(breeze_possible, trap_table)
+            fp = compute_probability(breeze_possible, trap_table, f, prob_trap)
+            print(fp)
 
 
-    output = np.zeros((n, m), dtype=float)
     with open(sys.argv[2], "w+") as output_f:
         pass
     return
