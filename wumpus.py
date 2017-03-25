@@ -67,11 +67,9 @@ def get_possible_areas(data):
 
 def get_fronts(data):
     y, x = data.shape
-    #fronts = np.zeros((y, x), dtype=int)
-
-    fronts = get_possible_areas(data)
-    print(fronts)
     curr_max = 0
+    fronts = get_possible_areas(data)
+
     for i in range(x):
         for j in range(y):
             if data[i][j] == 'B':
@@ -91,12 +89,13 @@ def wumpus():
         input = input_f.readlines()
     n, m = map(int, input[0].strip().split(' '))
     prob_hole = float(input[1])
-    data = np.array([list(line.strip()) for line in input[2:]])
+    data = np.array([list(line.strip()) for line in input[2:(2+n)]])
 
     fronts = get_fronts(data)
     print(fronts)
-    output = np.zeros((n, m), dtype=float)
+    
 
+    output = np.zeros((n, m), dtype=float)
     with open(sys.argv[2], "w+") as output_f:
         pass
     return
