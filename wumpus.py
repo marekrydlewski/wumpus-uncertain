@@ -9,11 +9,11 @@ def set_neighbors(arr, coords, value=-1):
 
     if i - 1 >= 0:
         arr[i - 1][j] = value
-    if i + 1 < x:
+    if i + 1 < y:
         arr[i + 1][j] = value
     if j - 1 >= 0:
         arr[i][j - 1] = value
-    if j + 1 < y:
+    if j + 1 < x:
         arr[i][j + 1] = value
 
 
@@ -28,10 +28,10 @@ def set_neighbors_except(arr, coords, value, no_set=-1):
     if j - 1 >= 0 and arr[i][j - 1] != no_set:
         arr[i][j - 1] = value
         neighbors.append((i, j - 1))
-    if j + 1 < y and arr[i][j + 1] != no_set:
+    if j + 1 < x and arr[i][j + 1] != no_set:
         arr[i][j + 1] = value
         neighbors.append((i, j + 1))
-    if i + 1 < x and arr[i + 1][j] != no_set:
+    if i + 1 < y and arr[i + 1][j] != no_set:
         arr[i + 1][j] = value
         neighbors.append((i + 1, j))
 
@@ -46,13 +46,13 @@ def get_max_neighbor(arr, coords):
     if i - 1 >= 0:
         if arr[i - 1][j] > max_value:
             max_value = arr[i - 1][j]
-    if i + 1 < x:
+    if i + 1 < y:
         if arr[i + 1][j] > max_value:
             max_value = arr[i + 1][j]
     if j - 1 >= 0:
         if arr[i][j - 1] > max_value:
             max_value = arr[i][j - 1]
-    if j + 1 < y:
+    if j + 1 < x:
         if arr[i][j + 1] > max_value:
             max_value = arr[i][j + 1]
     return max_value
@@ -223,8 +223,8 @@ def wumpus():
             i, j = f
             output[i][j] = pb_left
 
-    output = np.around(output, 2)
-    print(output)
+    # output = np.around(output, 2)
+    # print(output)
     with open(sys.argv[2], "w+") as output_f:
         for line in output:
             for prob in line:
